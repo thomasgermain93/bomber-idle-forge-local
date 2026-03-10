@@ -92,9 +92,13 @@ const SummonModal: React.FC<SummonModalProps> = ({ isOpen, onClose, onSummon, co
           className="pixel-border bg-card p-3 sm:p-5 max-w-lg w-full max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg"
           onClick={e => e.stopPropagation()}
         >
-          <h2 className="font-pixel text-sm text-center text-foreground mb-3 flex items-center justify-center gap-2">
+          <h2 className="font-pixel text-sm text-center text-foreground mb-1 flex items-center justify-center gap-2">
             <Sparkles size={16} className="text-primary" /> INVOCATION
           </h2>
+          <div className="mb-3 flex items-center justify-center gap-1.5 rounded bg-primary/10 border border-primary/30 px-2.5 py-1.5">
+            <PixelIcon icon="coins" size={11} />
+            <span className="font-pixel text-[8px] text-primary">BC disponibles : {coins}</span>
+          </div>
 
           {/* Result / Animation Area */}
           <div className="min-h-[200px] flex items-center justify-center mb-4 relative overflow-hidden rounded-lg bg-muted/50 p-4">
