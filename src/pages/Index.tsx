@@ -1067,20 +1067,17 @@ const Index = () => {
 
                 {/* Controls */}
                 <div className="flex items-center gap-1.5">
-                  {[1, 2, 3].map(speed => (
-                    <button
-                      key={speed}
-                      onClick={() => { huntSpeedRef.current = speed; setGameState(prev => prev ? { ...prev, speed } : prev); }}
-                      className={`font-pixel text-[8px] px-2 py-1.5 rounded transition-all ${
-                        gameState.speed === speed
-                          ? 'bg-primary text-primary-foreground shadow-md'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      {speed > 1 && <FastForward size={9} />}
-                      x{speed}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => {
+                      const nextSpeed = gameState.speed === 1 ? 2 : gameState.speed === 2 ? 3 : 1;
+                      huntSpeedRef.current = nextSpeed;
+                      setGameState(prev => (prev ? { ...prev, speed: nextSpeed } : prev));
+                    }}
+                    className="font-pixel text-[8px] px-2 py-1.5 rounded transition-all bg-primary text-primary-foreground shadow-md min-w-[38px]"
+                    title="Vitesse de chasse"
+                  >
+                    x{gameState.speed}
+                  </button>
                   <div className="w-px h-5 bg-border mx-0.5" />
                   <button
                     onClick={() => setGameState(prev => prev ? { ...prev, isPaused: !prev.isPaused } : prev)}
