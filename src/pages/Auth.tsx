@@ -21,6 +21,21 @@ const Auth: React.FC = () => {
     if (user) navigate('/game');
   }, [user, navigate]);
 
+  // Handle OAuth error redirects (e.g. Google OAuth not configured)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('error=')) {
+      const params = new URLSearchParams(hash.replace('#', ''));
+      const errorDescription = params.get('error_description') || params.get('error') || 'Erreur de connexion';
+      toast.error(decodeURIComponent(errorDescription.replace(/\+/g, ' ')));
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    const errorParam = searchParams.get('error_description') || searchParams.get('error');
+    if (errorParam) {
+      toast.error(decodeURIComponent(errorParam.replace(/\+/g, ' ')));
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -34,9 +49,15 @@ const Auth: React.FC = () => {
       : await signUp(email, password, displayName || undefined);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      if (error.message === 'Email not confirmed') {
+        toast.error('Email non confirmé. Vérifie ta boîte mail et clique sur le lien de confirmation.');
+      } else if (error.message === 'Invalid login credentials') {
+        toast.error('Email ou mot de passe incorrect.');
+      } else {
+        toast.error(error.message);
+      }
     } else if (mode === 'signup') {
-      toast.success('Compte créé ! Vérifie ton email pour confirmer.');
+      toast.success('Compte créé ! Vérifie ton email pour confirmer. (Pense à regarder les spams)');
     }
   };
 
