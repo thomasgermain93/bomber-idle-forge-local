@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, BookOpen, ChevronRight, Image as ImageIcon, PawPrint } from 'lucide-react';
 import PixelIcon from '@/components/PixelIcon';
 import { BESTIARY_BY_FAMILY, BESTIARY_STATUS_LABELS, AssetStatus, BestiaryBomber } from '@/data/bestiary';
+import { drawHeroSprite } from '@/game/heroRenderer';
 import { RARITY_CONFIG } from '@/game/types';
 
 const statusClasses: Record<AssetStatus, string> = {
@@ -11,21 +12,41 @@ const statusClasses: Record<AssetStatus, string> = {
   ready: 'bg-green-500/10 text-green-400 border-green-500/30',
 };
 
-const AssetPreview: React.FC<{ label: string; src?: string; status: AssetStatus }> = ({ label, src, status }) => {
+const AssetPreview: React.FC<{ label: string; src?: string; status: AssetStatus; rarity?: BestiaryBomber['rarity'] }> = ({ label, src, status, rarity }) => {
   const [hasLoadError, setHasLoadError] = useState(false);
-  const hasAsset = !!src && !hasLoadError;
+
+  const generatedSprite = useMemo(() => {
+    if (!rarity || typeof document === 'undefined') return undefined;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 80;
+    canvas.height = 80;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return undefined;
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.save();
+    ctx.scale(2, 2);
+    drawHeroSprite(ctx, 0, 0, rarity, 'idle', 0, 'bestiary-preview', 100, 100);
+    ctx.restore();
+
+    return canvas.toDataURL('image/png');
+  }, [rarity]);
+
+  const resolvedSrc = !hasLoadError && src ? src : generatedSprite;
 
   return (
     <div className="rounded border border-border bg-background/70 p-2">
       <p className="font-pixel text-[6px] text-muted-foreground mb-1.5 uppercase">{label}</p>
       <div className="h-20 rounded bg-card border border-border/60 flex items-center justify-center overflow-hidden">
-        {hasAsset ? (
+        {resolvedSrc ? (
           <img
-            src={src}
+            src={resolvedSrc}
             alt={`${label} preview`}
             loading="lazy"
             onError={() => setHasLoadError(true)}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         ) : (
           <div className="text-center px-2">
@@ -41,6 +62,9 @@ const AssetPreview: React.FC<{ label: string; src?: string; status: AssetStatus 
         <p className="mt-1 text-[9px] text-muted-foreground/80 truncate" title={src}>
           {src}
         </p>
+      )}
+      {!src && generatedSprite && (
+        <p className="mt-1 text-[9px] text-muted-foreground/70">Preview générée depuis le skin en jeu</p>
       )}
     </div>
   );
@@ -79,8 +103,8 @@ const BomberCard: React.FC<{ bomber: BestiaryBomber }> = ({ bomber }) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <AssetPreview label="Sprite" src={bomber.assets.spriteSheet} status={bomber.assetStatus} />
-        <AssetPreview label="Portrait" src={bomber.assets.portrait} status={bomber.assetStatus} />
+        <AssetPreview label="Sprite" src={bomber.assets.spriteSheet} status={bomber.assetStatus} rarity={bomber.rarity} />
+        <AssetPreview label="Portrait" src={bomber.assets.portrait} status={bomber.assetStatus} rarity={bomber.rarity} />
       </div>
     </article>
   );

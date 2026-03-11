@@ -1,7 +1,3 @@
-import gameHeroesImage from '@/assets/game-heroes.jpg';
-import gameCombatImage from '@/assets/game-combat.jpg';
-import gameMapImage from '@/assets/game-map.jpg';
-import gameBossImage from '@/assets/game-boss.jpg';
 import { HERO_ICON_KEYS, HERO_NAMES, Rarity } from '@/game/types';
 
 export type AssetStatus = 'missing' | 'wip' | 'ready';
@@ -42,27 +38,27 @@ const HERO_ICON_BY_NAME = Object.fromEntries(
 );
 
 export const BESTIARY_BOMBERS: BestiaryBomber[] = [
-  { id: 'blaze', name: 'Blaze', familyId: 'ember-clan', rarity: 'rare', assetStatus: 'ready', assets: { spriteSheet: gameCombatImage, portrait: gameHeroesImage } },
-  { id: 'ember', name: 'Ember', familyId: 'ember-clan', rarity: 'common', assetStatus: 'wip', assets: { spriteSheet: gameMapImage } },
+  { id: 'blaze', name: 'Blaze', familyId: 'ember-clan', rarity: 'rare', assetStatus: 'ready', assets: {} },
+  { id: 'ember', name: 'Ember', familyId: 'ember-clan', rarity: 'common', assetStatus: 'wip', assets: {} },
   { id: 'pyro', name: 'Pyro', familyId: 'ember-clan', rarity: 'epic', assetStatus: 'missing', assets: {} },
   { id: 'fuse', name: 'Fuse', familyId: 'ember-clan', rarity: 'super-rare', assetStatus: 'missing', assets: {} },
-  { id: 'spark', name: 'Spark', familyId: 'storm-riders', rarity: 'common', assetStatus: 'ready', assets: { spriteSheet: gameHeroesImage, portrait: gameBossImage } },
-  { id: 'volt', name: 'Volt', familyId: 'storm-riders', rarity: 'rare', assetStatus: 'wip', assets: { portrait: gameCombatImage } },
+  { id: 'spark', name: 'Spark', familyId: 'storm-riders', rarity: 'common', assetStatus: 'ready', assets: {} },
+  { id: 'volt', name: 'Volt', familyId: 'storm-riders', rarity: 'rare', assetStatus: 'wip', assets: {} },
   { id: 'storm', name: 'Storm', familyId: 'storm-riders', rarity: 'epic', assetStatus: 'missing', assets: {} },
   { id: 'zap', name: 'Zap', familyId: 'storm-riders', rarity: 'super-legend', assetStatus: 'missing', assets: {} },
-  { id: 'flint', name: 'Flint', familyId: 'forge-guard', rarity: 'common', assetStatus: 'wip', assets: { spriteSheet: '/assets/sprites/heroes/flint.png', portrait: gameHeroesImage } },
+  { id: 'flint', name: 'Flint', familyId: 'forge-guard', rarity: 'common', assetStatus: 'wip', assets: {} },
   { id: 'rex', name: 'Rex', familyId: 'forge-guard', rarity: 'rare', assetStatus: 'missing', assets: {} },
   { id: 'atlas', name: 'Atlas', familyId: 'forge-guard', rarity: 'legend', assetStatus: 'missing', assets: {} },
   { id: 'duke', name: 'Duke', familyId: 'forge-guard', rarity: 'super-rare', assetStatus: 'missing', assets: {} },
-  { id: 'ash', name: 'Ash', familyId: 'shadow-core', rarity: 'rare', assetStatus: 'wip', assets: { spriteSheet: gameBossImage } },
-  { id: 'nova', name: 'Nova', familyId: 'shadow-core', rarity: 'legend', assetStatus: 'ready', assets: { spriteSheet: gameCombatImage, portrait: gameBossImage } },
+  { id: 'ash', name: 'Ash', familyId: 'shadow-core', rarity: 'rare', assetStatus: 'wip', assets: {} },
+  { id: 'nova', name: 'Nova', familyId: 'shadow-core', rarity: 'legend', assetStatus: 'ready', assets: {} },
   { id: 'echo', name: 'Echo', familyId: 'shadow-core', rarity: 'super-rare', assetStatus: 'missing', assets: {} },
   { id: 'crash', name: 'Crash', familyId: 'shadow-core', rarity: 'epic', assetStatus: 'missing', assets: {} },
-  { id: 'pixel', name: 'Pixel', familyId: 'arcane-circuit', rarity: 'rare', assetStatus: 'wip', assets: { spriteSheet: gameMapImage } },
+  { id: 'pixel', name: 'Pixel', familyId: 'arcane-circuit', rarity: 'rare', assetStatus: 'wip', assets: {} },
   { id: 'chip', name: 'Chip', familyId: 'arcane-circuit', rarity: 'common', assetStatus: 'missing', assets: {} },
   { id: 'byte', name: 'Byte', familyId: 'arcane-circuit', rarity: 'super-rare', assetStatus: 'missing', assets: {} },
   { id: 'orion', name: 'Orion', familyId: 'arcane-circuit', rarity: 'legend', assetStatus: 'missing', assets: {} },
-  { id: 'boom', name: 'Boom', familyId: 'wild-pack', rarity: 'common', assetStatus: 'ready', assets: { spriteSheet: gameHeroesImage, portrait: gameMapImage } },
+  { id: 'boom', name: 'Boom', familyId: 'wild-pack', rarity: 'common', assetStatus: 'ready', assets: {} },
   { id: 'nitro', name: 'Nitro', familyId: 'wild-pack', rarity: 'super-rare', assetStatus: 'missing', assets: {} },
   { id: 'rush', name: 'Rush', familyId: 'wild-pack', rarity: 'rare', assetStatus: 'missing', assets: {} },
   { id: 'flash', name: 'Flash', familyId: 'wild-pack', rarity: 'epic', assetStatus: 'missing', assets: {} },
