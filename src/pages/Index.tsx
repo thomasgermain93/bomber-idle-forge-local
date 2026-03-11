@@ -194,6 +194,7 @@ const Index = () => {
                 range: 2,
                 timer: 1.5,
                 power: Math.ceil(boss!.damage / 3),
+                team: 'enemies',
               });
             }
           });
@@ -211,26 +212,28 @@ const Index = () => {
           if (!processedExplosionsRef.current.has(exp.id)) {
             processedExplosionsRef.current.add(exp.id);
             SFX.explosion();
-            const heroPower = Math.max(...state.heroes.map(h => h.stats.pwr), 1);
-            const { enemies: updatedEnemies, kills } = damageEnemiesFromExplosion(enemies, exp.tiles, heroPower);
-            enemies = updatedEnemies;
-            enemiesKilled += kills;
-            if (kills > 0) {
-              SFX.enemyKill();
-              eventLog.push(`💥 ${kills} ennemi(s) éliminé(s)!`);
-              coinsEarned += kills * 10;
-            }
-
-            if (boss && boss.hp > 0) {
-              const prevHp = boss.hp;
-              boss = damageBossFromExplosion(boss, exp.tiles, heroPower + 1);
-              if (boss.hp < prevHp) {
-                SFX.bossHit();
-                eventLog.push(`💥 Boss touché! (${boss.hp}/${boss.maxHp} HP)`);
+            if (exp.team === 'heroes') {
+              const heroPower = Math.max(...state.heroes.map(h => h.stats.pwr), 1);
+              const { enemies: updatedEnemies, kills } = damageEnemiesFromExplosion(enemies, exp.tiles, heroPower);
+              enemies = updatedEnemies;
+              enemiesKilled += kills;
+              if (kills > 0) {
+                SFX.enemyKill();
+                eventLog.push(`💥 ${kills} ennemi(s) éliminé(s)!`);
+                coinsEarned += kills * 10;
               }
-              if (boss.hp <= 0 && prevHp > 0) {
-                eventLog.push(`👑 BOSS VAINCU!`);
-                coinsEarned += 500;
+
+              if (boss && boss.hp > 0) {
+                const prevHp = boss.hp;
+                boss = damageBossFromExplosion(boss, exp.tiles, heroPower + 1);
+                if (boss.hp < prevHp) {
+                  SFX.bossHit();
+                  eventLog.push(`💥 Boss touché! (${boss.hp}/${boss.maxHp} HP)`);
+                }
+                if (boss.hp <= 0 && prevHp > 0) {
+                  eventLog.push(`👑 BOSS VAINCU!`);
+                  coinsEarned += 500;
+                }
               }
             }
           }
