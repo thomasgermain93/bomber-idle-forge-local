@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -75,8 +75,7 @@
     font-family: 'Inter', sans-serif;
   }
   .font-pixel {
-    font-family: 'Pixel Code', 'Silkscreen', 'Press Start 2P', 'Courier New', monospace;
-    letter-spacing: 0.02em;
+    font-family: 'Press Start 2P', cursive;
   }
 }
 

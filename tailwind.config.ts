@@ -12,7 +12,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        pixel: ['"Pixel Code"', 'Silkscreen', '"Press Start 2P"', '"Courier New"', 'monospace'],
+        pixel: ['"Press Start 2P"', 'cursive'],
         sans: ['Inter', 'sans-serif'],
       },
       colors: {
