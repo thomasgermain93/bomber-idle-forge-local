@@ -14,6 +14,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-03-10',
     title: 'Mises à jour récentes',
     changes: [
+      { type: 'feature', description: 'Bug: chiffres clés landing toujours vides (follow-up) (#70)' },
       { type: 'feature', description: 'UX: impossible de revenir depuis la page profil (#69)' },
       { type: 'feature', description: 'fix: robust username save check (follow-up #62) (#66)' },
       { type: 'fix', description: 'Bug d\'affichage (#56)' },
