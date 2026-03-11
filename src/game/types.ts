@@ -113,6 +113,7 @@ export interface PlayerData {
   totalHeroesOwned: number;
   mapsCompleted: number;
   shards: Record<Rarity, number>;
+  huntSpeed?: number;
 }
 
 export const RARITY_CONFIG: Record<Rarity, {
