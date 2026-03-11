@@ -41,6 +41,8 @@ export interface Hero {
   icon: string; // icon key for PixelIcon
 }
 
+export type BombTeam = 'heroes' | 'enemies';
+
 export interface Bomb {
   id: string;
   heroId: string;
@@ -48,12 +50,14 @@ export interface Bomb {
   range: number;
   timer: number;
   power: number;
+  team: BombTeam;
 }
 
 export interface Explosion {
   id: string;
   tiles: { x: number; y: number }[];
   timer: number;
+  team: BombTeam;
 }
 
 export interface Chest {

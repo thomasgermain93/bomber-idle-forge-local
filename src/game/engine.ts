@@ -388,7 +388,7 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
   // Process explosions from bombs
   for (const bomb of explodingBombs) {
     const tiles = getExplosionTiles(map, bomb.position, bomb.range);
-    explosions.push({ id: genId(), tiles, timer: 0.4 });
+    explosions.push({ id: genId(), tiles, timer: 0.4, team: bomb.team });
 
     for (const tile of tiles) {
       if (map.tiles[tile.y][tile.x] === 'block') {
@@ -419,13 +419,15 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
     for (const cb of chainedBombs) {
       bombs = bombs.filter(b => b.id !== cb.id);
       const cbTiles = getExplosionTiles(map, cb.position, cb.range);
-      explosions.push({ id: genId(), tiles: cbTiles, timer: 0.4 });
+      explosions.push({ id: genId(), tiles: cbTiles, timer: 0.4, team: cb.team });
     }
 
-    // Hero energy loss in explosion
-    for (const hero of heroes) {
-      if (tiles.some(t => t.x === Math.round(hero.position.x) && t.y === Math.round(hero.position.y)) && hero.state !== 'resting') {
-        hero.currentStamina = Math.max(0, hero.currentStamina - Math.floor(hero.maxStamina * 0.15));
+    // Explosion damage to heroes: only enemy bombs can hurt heroes
+    if (bomb.team === 'enemies') {
+      for (const hero of heroes) {
+        if (tiles.some(t => t.x === Math.round(hero.position.x) && t.y === Math.round(hero.position.y)) && hero.state !== 'resting') {
+          hero.currentStamina = Math.max(0, hero.currentStamina - Math.floor(hero.maxStamina * 0.15));
+        }
       }
     }
   }
@@ -535,8 +537,9 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
             range: hero.stats.rng,
             timer: 2.0,
             power: hero.stats.pwr,
+            team: 'heroes',
           });
-          hero.currentStamina -= 1;
+          hero.currentStamina = Math.max(0, hero.currentStamina - 1);
           hero.bombCooldown = 0.5;
           bombsPlaced++;
 
