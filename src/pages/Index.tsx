@@ -60,9 +60,11 @@ const Index = () => {
   const gameLoopRef = useRef<number>();
 
   useEffect(() => {
-    const saved = Number(localStorage.getItem('hunt-speed') || '1');
-    const initialSpeed = saved === 2 || saved === 3 ? saved : 1;
-    huntSpeedRef.current = initialSpeed;
+    // For guests: restore speed from localStorage. For auth users: cloud load handles it.
+    if (!user) {
+      const saved = Number(localStorage.getItem('hunt-speed') || '1');
+      huntSpeedRef.current = saved === 2 || saved === 3 ? saved : 1;
+    }
   }, []);
   const lastTickRef = useRef<number>(Date.now());
   const processedExplosionsRef = useRef<Set<string>>(new Set());
@@ -80,11 +82,34 @@ const Index = () => {
     if (!user) return;
     loadFromCloud().then(data => {
       if (data) {
+        // Cloud data is the single source of truth for authenticated users
         setPlayer(data.playerData);
-        setStoryProgress(data.storyProgress);
+        setStoryProgress(data.storyProgress ?? { completedStages: [], currentRegion: 'forest', bossesDefeated: [], highestStage: 0 });
         // Regenerate quests if they are from a previous day
         const today = new Date().toISOString().split('T')[0];
         setDailyQuests(data.dailyQuests?.date === today ? data.dailyQuests : generateDailyQuests());
+        // Restore hunt speed preference from cloud
+        const cloudSpeed = data.playerData.huntSpeed;
+        if (cloudSpeed === 2 || cloudSpeed === 3) {
+          huntSpeedRef.current = cloudSpeed;
+        }
+      } else {
+        // No cloud save yet — migrate localStorage data to Supabase (first login after playing as guest)
+        const localData = loadPlayerData();
+        const localStory = loadStoryProgress();
+        const localQuests = loadDailyQuests();
+        setPlayer(localData);
+        setStoryProgress(localStory);
+        const today = new Date().toISOString().split('T')[0];
+        setDailyQuests(localQuests?.date === today ? localQuests : generateDailyQuests());
+        // Upload to cloud immediately so Supabase becomes the source of truth
+        saveStatsToCloud(localData, localStory, localQuests?.date === today ? localQuests : generateDailyQuests());
+        saveHeroesToCloud(localData.heroes);
+        const localSpeed = Number(localStorage.getItem('hunt-speed') || '1');
+        if (localSpeed === 2 || localSpeed === 3) {
+          huntSpeedRef.current = localSpeed;
+          setPlayer(prev => ({ ...prev, huntSpeed: localSpeed }));
+        }
       }
       setIsCloudLoading(false);
     });
@@ -670,7 +695,10 @@ const Index = () => {
       pityCounters: currentPity,
       totalHeroesOwned: mergedHeroes.length,
     }));
-    saveHeroesToCloud(batch);
+    // Save all new heroes; if autoMerge removed some, delete them from Supabase too
+    saveHeroesToCloud(mergedHeroes.filter(h => !player.heroes.some(existing => existing.id === h.id)));
+    const removedByMerge = newHeroes.filter(h => !mergedHeroes.some(m => m.id === h.id)).map(h => h.id);
+    if (removedByMerge.length > 0) removeHeroesFromCloud(removedByMerge);
     setDailyQuests(prev => updateQuestProgress(prev, 'summon_heroes', count));
   };
 
@@ -1156,7 +1184,12 @@ const Index = () => {
                     onClick={() => {
                       const nextSpeed = gameState.speed === 1 ? 2 : gameState.speed === 2 ? 3 : 1;
                       huntSpeedRef.current = nextSpeed;
-                      localStorage.setItem('hunt-speed', String(nextSpeed));
+                      if (user) {
+                        // Persist speed preference in Supabase for authenticated users
+                        setPlayer(prev => ({ ...prev, huntSpeed: nextSpeed }));
+                      } else {
+                        localStorage.setItem('hunt-speed', String(nextSpeed));
+                      }
                       setGameState(prev => (prev ? { ...prev, speed: nextSpeed } : prev));
                     }}
                     className="font-pixel text-[8px] sm:text-[7px] px-3 py-2.5 sm:py-1.5 rounded transition-all bg-primary text-primary-foreground shadow-md min-w-[44px] sm:min-w-[38px] min-h-[44px] sm:min-h-[auto]"

@@ -25,6 +25,7 @@ export function getDefaultPlayerData(): PlayerData {
       legend: 0,
       'super-legend': 0,
     } as Record<Rarity, number>,
+    huntSpeed: 1,
   };
 }
 
