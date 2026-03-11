@@ -31,23 +31,15 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>('hub');
-  const [player, setPlayer] = useState<PlayerData>(() =>
-    user ? getDefaultPlayerData() : loadPlayerData()
-  );
+  const [player, setPlayer] = useState<PlayerData>(() => loadPlayerData());
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [summonOpen, setSummonOpen] = useState(false);
   const [lastSummoned, setLastSummoned] = useState<Hero | null>(null);
   const [selectedMap, setSelectedMap] = useState(0);
   const [selectedHeroes, setSelectedHeroes] = useState<Set<string>>(new Set());
   const [upgradeHeroId, setUpgradeHeroId] = useState<string | null>(null);
-  const [dailyQuests, setDailyQuests] = useState<DailyQuestData>(() =>
-    user ? generateDailyQuests() : loadDailyQuests()
-  );
-  const [storyProgress, setStoryProgress] = useState<StoryProgress>(() =>
-    user
-      ? { completedStages: [], currentRegion: 'forest', bossesDefeated: [], highestStage: 0 }
-      : loadStoryProgress()
-  );
+  const [dailyQuests, setDailyQuests] = useState<DailyQuestData>(() => loadDailyQuests());
+  const [storyProgress, setStoryProgress] = useState<StoryProgress>(() => loadStoryProgress());
   const [currentStoryStage, setCurrentStoryStage] = useState<StoryStage | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const [isCloudLoading, setIsCloudLoading] = useState(!!user);
@@ -80,12 +72,15 @@ const Index = () => {
     if (!user) return;
     loadFromCloud().then(data => {
       if (data) {
+        // Cloud data takes precedence over localStorage for authenticated users
         setPlayer(data.playerData);
-        setStoryProgress(data.storyProgress);
+        setStoryProgress(data.storyProgress ?? loadStoryProgress());
         // Regenerate quests if they are from a previous day
         const today = new Date().toISOString().split('T')[0];
         setDailyQuests(data.dailyQuests?.date === today ? data.dailyQuests : generateDailyQuests());
       }
+      // If data is null (no cloud save yet), state already holds the localStorage values —
+      // no reset needed.
       setIsCloudLoading(false);
     });
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
