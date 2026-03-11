@@ -292,7 +292,9 @@ interface LandingKpis {
   lastSuperLegend: string | null;
 }
 
-const KPI_TIMEOUT_MS = 4500;
+const KPI_TIMEOUT_MS = 8000;
+const KPI_RETRY_DELAY_MS = 1000;
+const KPI_MAX_RETRIES = 1;
 
 const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
   return Promise.race([
@@ -301,6 +303,25 @@ const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
       setTimeout(() => reject(new Error('KPI timeout')), ms)
     ),
   ]);
+};
+
+const withRetry = async <T,>(
+  fn: () => Promise<T>,
+  maxRetries: number,
+  delayMs: number
+): Promise<T> => {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError;
 };
 
 const KPI_FALLBACK: LandingKpis = {
@@ -331,34 +352,24 @@ const Landing: React.FC = () => {
       setKpisLoading(true);
       try {
         const kpiRequest = async () => {
-          const [playersResult, invocationsResult, lastSuperLegendResult] = await Promise.all([
-            supabase.from('profiles').select('id', { count: 'exact', head: true }),
-            supabase.from('player_heroes').select('id', { count: 'exact', head: true }),
-            supabase
-              .from('player_heroes')
-              .select('user_id, created_at')
-              .eq('rarity', 'super-legend')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle(),
-          ]);
-
-          let lastSuperLegendName: string | null = null;
-          if (lastSuperLegendResult.data?.user_id) {
-            const profileResult = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('user_id', lastSuperLegendResult.data.user_id)
-              .maybeSingle();
-            lastSuperLegendName = profileResult.data?.display_name ?? null;
+          const { data, error } = await supabase.rpc('get_landing_stats');
+          
+          if (error) {
+            console.error('[KPI] RPC error:', {
+              code: error.code,
+              message: error.message,
+              details: error.details,
+              hint: error.hint
+            });
+            throw new Error(`KPI RPC failed: ${error.message}`);
           }
 
           if (!isMounted) return null;
 
           return {
-            players: playersResult.error ? null : (playersResult.count ?? null),
-            totalInvocations: invocationsResult.error ? null : (invocationsResult.count ?? null),
-            lastSuperLegend: lastSuperLegendName,
+            players: data?.players ?? null,
+            totalInvocations: data?.totalInvocations ?? null,
+            lastSuperLegend: data?.lastSuperLegend ?? null,
           };
         };
 
@@ -369,7 +380,11 @@ const Landing: React.FC = () => {
           }
         }, KPI_TIMEOUT_MS);
 
-        const result = await withTimeout(kpiRequest(), KPI_TIMEOUT_MS);
+        const result = await withRetry(
+          () => withTimeout(kpiRequest(), KPI_TIMEOUT_MS),
+          KPI_MAX_RETRIES,
+          KPI_RETRY_DELAY_MS
+        );
         clearTimeout(timeoutId);
 
         if (!isMounted) return;
@@ -379,8 +394,14 @@ const Landing: React.FC = () => {
         } else {
           setKpis(KPI_FALLBACK);
         }
-      } catch {
+      } catch (err) {
         if (!isMounted) return;
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error('[KPI] Load failed:', {
+          message: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString()
+        });
         setKpis(KPI_FALLBACK);
       } finally {
         clearTimeout(timeoutId);
