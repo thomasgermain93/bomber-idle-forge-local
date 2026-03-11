@@ -20,7 +20,7 @@ import { STORY_REGIONS } from '@/game/storyData';
 import { getExplosionTiles } from '@/game/engine';
 import DailyQuests from '@/components/DailyQuests';
 import PixelIcon from '@/components/PixelIcon';
-import { Home, Users, Sparkles, Swords, Map, Trophy, Coins, Star, ChevronLeft, Play, Pause, DoorOpen, Check, Scroll, FastForward, BookOpen, Shield, Skull, Bomb, Lock as LockIcon, Volume2, VolumeX } from 'lucide-react';
+import { Home, Users, Sparkles, Swords, Map, Trophy, Coins, Star, ChevronLeft, Play, Pause, DoorOpen, Check, Scroll, FastForward, BookOpen, Shield, Skull, Bomb, Lock as LockIcon, Volume2, VolumeX, User } from 'lucide-react';
 import { SFX, isMuted, setMuted } from '@/game/sfx';
 import { toast } from '@/hooks/use-toast';
 
@@ -841,13 +841,22 @@ const Index = () => {
             <Users size={10} /> {player.heroes.length}
           </div>
           {user && (
-            <button
-              onClick={async () => { await signOut(); navigate('/'); }}
-              className="p-2 sm:p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground min-w-[44px] sm:min-w-[auto] min-h-[36px] sm:min-h-[auto] flex items-center justify-center"
-              title="Déconnexion"
-            >
-              <DoorOpen size={16} />
-            </button>
+            <>
+              <button
+                onClick={() => navigate('/profile')}
+                className="p-2 sm:p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground min-w-[44px] sm:min-w-[auto] min-h-[36px] sm:min-h-[auto] flex items-center justify-center"
+                title="Profil"
+              >
+                <User size={16} />
+              </button>
+              <button
+                onClick={async () => { await signOut(); navigate('/'); }}
+                className="p-2 sm:p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground min-w-[44px] sm:min-w-[auto] min-h-[36px] sm:min-h-[auto] flex items-center justify-center"
+                title="Déconnexion"
+              >
+                <DoorOpen size={16} />
+              </button>
+            </>
           )}
         </div>
       </header>

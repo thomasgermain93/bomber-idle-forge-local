@@ -16,6 +16,7 @@ import Glossary from "./pages/Glossary";
 import Bestiary from "./pages/Bestiary";
 import Changelog from "./pages/Changelog";
 import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import UsernameRequiredDialog from "./components/UsernameRequiredDialog";
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/wiki/:slug" element={<WikiPage />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>
