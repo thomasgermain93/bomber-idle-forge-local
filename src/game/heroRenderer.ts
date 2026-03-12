@@ -81,13 +81,71 @@ const RARITY_SPRITES: Record<string, HeroSpriteConfig> = {
   },
 };
 
+const FAMILY_SPRITES: Record<string, Partial<HeroSpriteConfig>> = {
+  'ember-clan': {
+    helmetColor: '#FF6B35',
+    visorColor: '#8B2500',
+    bodyColor: '#E85D04',
+  },
+  'storm-riders': {
+    helmetColor: '#4CC9F0',
+    visorColor: '#023E8A',
+    bodyColor: '#4361EE',
+  },
+  'forge-guard': {
+    helmetColor: '#A8A8A8',
+    visorColor: '#404040',
+    bodyColor: '#6C757D',
+  },
+  'shadow-core': {
+    helmetColor: '#7B2CBF',
+    visorColor: '#240046',
+    bodyColor: '#5A189A',
+  },
+  'arcane-circuit': {
+    helmetColor: '#06D6A0',
+    visorColor: '#004B23',
+    bodyColor: '#2EC4B6',
+  },
+  'wild-pack': {
+    helmetColor: '#70E000',
+    visorColor: '#38B000',
+    bodyColor: '#9EF01A',
+  },
+};
 
-function getHeroSpriteConfig(rarity: string): HeroSpriteConfig {
-  return RARITY_SPRITES[rarity] || RARITY_SPRITES.common;
+const HERO_FAMILY_MAP: Record<string, string> = {
+  blaze: 'ember-clan', ember: 'ember-clan', pyro: 'ember-clan', fuse: 'ember-clan', blast: 'ember-clan', sol: 'ember-clan',
+  spark: 'storm-riders', volt: 'storm-riders', storm: 'storm-riders', zap: 'storm-riders', vega: 'storm-riders', dash: 'storm-riders',
+  flint: 'forge-guard', rex: 'forge-guard', atlas: 'forge-guard', duke: 'forge-guard', max: 'forge-guard',
+  ash: 'shadow-core', nova: 'shadow-core', echo: 'shadow-core', crash: 'shadow-core', luna: 'shadow-core',
+  pixel: 'arcane-circuit', chip: 'arcane-circuit', byte: 'arcane-circuit', orion: 'arcane-circuit',
+  boom: 'wild-pack', nitro: 'wild-pack', rush: 'wild-pack', flash: 'wild-pack', jet: 'wild-pack', ace: 'wild-pack',
+};
+
+
+function getHeroSpriteConfig(rarity: string, heroId?: string): HeroSpriteConfig {
+  const baseConfig = RARITY_SPRITES[rarity] || RARITY_SPRITES.common;
+  
+  if (!heroId || heroId === 'bestiary-preview') {
+    return baseConfig;
+  }
+  
+  const family = HERO_FAMILY_MAP[heroId.toLowerCase()];
+  const familyConfig = family ? FAMILY_SPRITES[family] : null;
+  
+  if (!familyConfig) {
+    return baseConfig;
+  }
+  
+  return {
+    ...baseConfig,
+    ...familyConfig,
+  };
 }
 
-export function drawHeroPortrait(ctx: CanvasRenderingContext2D, rarity: string, time: number = 0) {
-  const config = getHeroSpriteConfig(rarity);
+export function drawHeroPortrait(ctx: CanvasRenderingContext2D, rarity: string, time: number = 0, heroId?: string) {
+  const config = getHeroSpriteConfig(rarity, heroId);
   const shouldBlink = Math.sin(time / 2000) > 0.93;
 
   ctx.imageSmoothingEnabled = false;
