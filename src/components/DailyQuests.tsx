@@ -21,7 +21,7 @@ const DailyQuests: React.FC<DailyQuestsProps> = ({ quests, onClaim, onClaimBonus
         <h3 className="font-pixel text-xs text-foreground flex items-center gap-2">
           <Clock size={16} className="text-primary" /> QUÊTES DU JOUR
         </h3>
-        <span className="text-[9px] text-muted-foreground font-pixel">
+        <span className="text-[9px] text-muted-foreground font-pixel tabular-nums">
           {quests.quests.filter(q => q.claimed).length}/{quests.quests.length} complétées
         </span>
       </div>
@@ -57,7 +57,7 @@ const DailyQuests: React.FC<DailyQuestsProps> = ({ quests, onClaim, onClaimBonus
                     value={(quest.progress / quest.target) * 100}
                     className="h-1.5 flex-1"
                   />
-                  <span className="text-[9px] text-muted-foreground font-mono w-14 text-right">
+                  <span className="text-[9px] text-muted-foreground font-mono w-14 text-right tabular-nums min-w-[2.5rem]">
                     {quest.progress}/{quest.target}
                   </span>
                 </div>

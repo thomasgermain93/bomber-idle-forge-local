@@ -952,7 +952,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border px-2 sm:px-4 py-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Bomb size={18} className="text-primary shrink-0" />
-          <h1 className="font-pixel text-[8px] sm:text-xs text-foreground tracking-wider hidden xs:block">BOMBERQUEST</h1>
+          <h1 className="font-pixel text-[8px] sm:text-xs text-foreground tracking-wider hidden sm:block">BOMBERQUEST</h1>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           <button
@@ -962,9 +962,9 @@ const Index = () => {
           >
             {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </button>
-          <div className="flex items-center gap-1.5 pixel-border px-2 sm:px-3 py-1.5 bg-muted">
+          <div className="flex items-center gap-1.5 pixel-border px-2 sm:px-3 py-1.5 bg-muted min-w-[70px] sm:min-w-[auto]">
             <Coins size={14} className="text-game-gold shrink-0" />
-            <span className="font-pixel text-[9px] sm:text-[10px] text-game-gold">
+            <span className="font-pixel text-[9px] sm:text-[10px] text-game-gold tabular-nums">
               {(player.bomberCoins + (gameState?.coinsEarned || 0)).toLocaleString()}
               {gameState?.coinsEarned ? <span className="text-[8px] opacity-70 ml-1">(+{gameState.coinsEarned})</span> : null}
             </span>
@@ -974,7 +974,7 @@ const Index = () => {
             <span className="text-border">|</span>
             <Users size={12} /> {player.heroes.length}
           </div>
-          <div className="flex sm:hidden items-center gap-1 text-[9px] text-muted-foreground">
+          <div className="flex sm:hidden items-center gap-1 text-[9px] text-muted-foreground tabular-nums">
             <Star size={10} /> {player.accountLevel}
             <Users size={10} /> {player.heroes.length}
           </div>
@@ -1049,7 +1049,7 @@ const Index = () => {
               ].map(stat => (
                 <div key={stat.label} className={`pixel-border bg-card p-3 text-center ${stat.glow}`}>
                   <div className="flex justify-center mb-1">{stat.icon}</div>
-                  <p className="font-pixel text-[10px] text-foreground mt-1">{stat.value}</p>
+                  <p className="font-pixel text-[10px] text-foreground mt-1 tabular-nums">{stat.value}</p>
                   <p className="text-[9px] text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
@@ -1205,7 +1205,7 @@ const Index = () => {
                         {hero ? (
                           <>
                             <PixelIcon icon={hero.icon} size={22} rarity={hero.rarity} />
-                            <p className="font-pixel text-[7px] text-foreground mt-1 truncate w-full text-center">{hero.name.split(' ')[0]}</p>
+                            <p className="font-pixel text-[7px] text-foreground mt-1 truncate max-w-[60px]">{hero.name.split(' ')[0]}</p>
                             <p className="text-[7px] mt-0.5" style={{ color: `hsl(var(--game-rarity-${hero.rarity}))` }}>
                               {RARITY_CONFIG[hero.rarity].label}
                             </p>
@@ -1291,34 +1291,34 @@ const Index = () => {
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 {/* Stats */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-muted">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-muted min-w-[60px]">
                     <Coins size={12} className="text-game-gold" />
-                    <span className="font-pixel text-[9px] text-game-gold">+{gameState.coinsEarned}</span>
+                    <span className="font-pixel text-[9px] text-game-gold tabular-nums">+{gameState.coinsEarned}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-muted">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-muted min-w-[40px]">
                     <span className="text-[10px]">💣</span>
-                    <span className="font-pixel text-[9px] text-muted-foreground">{gameState.bombsPlaced}</span>
+                    <span className="font-pixel text-[9px] text-muted-foreground tabular-nums">{gameState.bombsPlaced}</span>
                   </div>
                   {!gameState.isStoryMode && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/15">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/15 min-w-[50px]">
                       <span className="text-[10px]">📦</span>
-                      <span className="font-pixel text-[9px] text-primary">
+                      <span className="font-pixel text-[9px] text-primary tabular-nums">
                         {gameState.chestsOpened}/{gameState.map.chests.length}
                       </span>
                     </div>
                   )}
                   {gameState.isStoryMode && (
                     <>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-destructive/15">
-                        <Skull size={12} className="text-destructive" />
-                        <span className="font-pixel text-[9px] text-destructive">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-destructive/15 min-w-[70px]">
+                        <Skull size={12} className="text-destructive shrink-0" />
+                        <span className="font-pixel text-[9px] text-destructive tabular-nums whitespace-nowrap">
                           {gameState.enemies?.filter(e => e.hp > 0).length || 0} restants
                         </span>
                       </div>
                       {(gameState.enemiesKilled || 0) > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/15">
-                          <Swords size={12} className="text-primary" />
-                          <span className="font-pixel text-[9px] text-primary">{gameState.enemiesKilled} tués</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/15 min-w-[50px]">
+                          <Swords size={12} className="text-primary shrink-0" />
+                          <span className="font-pixel text-[9px] text-primary tabular-nums">{gameState.enemiesKilled} tué(s)</span>
                         </div>
                       )}
                     </>
@@ -1339,7 +1339,7 @@ const Index = () => {
                       }
                       setGameState(prev => (prev ? { ...prev, speed: nextSpeed } : prev));
                     }}
-                    className="font-pixel text-[8px] sm:text-[7px] px-3 py-2.5 sm:py-1.5 rounded transition-all bg-primary text-primary-foreground shadow-md min-w-[44px] sm:min-w-[38px] min-h-[44px] sm:min-h-[auto]"
+                    className="font-pixel text-[8px] sm:text-[7px] px-3 py-2.5 sm:py-1.5 rounded transition-all bg-primary text-primary-foreground shadow-md min-w-[44px] sm:min-w-[38px] min-h-[44px] sm:min-h-[auto] tabular-nums"
                     title="Vitesse de chasse"
                   >
                     x{gameState.speed}
@@ -1375,7 +1375,7 @@ const Index = () => {
                     <div key={hero.id} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] ${
                       isResting ? 'bg-muted/50 opacity-60' : 'bg-muted'
                     }`}>
-                      <span className="font-pixel text-[7px] text-foreground truncate max-w-[60px]">{hero.name}</span>
+                      <span className="font-pixel text-[7px] text-foreground truncate max-w-[50px] sm:max-w-[60px]">{hero.name}</span>
                       <div className="w-16 h-1.5 bg-background rounded-full overflow-hidden">
                         <div
                           className={`h-full ${
@@ -1398,9 +1398,9 @@ const Index = () => {
               <div className="pixel-border bg-card p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-pixel text-[8px] text-destructive flex items-center gap-1">
-                    <Skull size={12} /> {gameState.boss.name}
+                    <Skull size={12} /> <span className="truncate max-w-[80px] sm:max-w-[auto]">{gameState.boss.name}</span>
                   </span>
-                  <span className="font-pixel text-[8px] text-muted-foreground">
+                  <span className="font-pixel text-[8px] text-muted-foreground tabular-nums whitespace-nowrap">
                     {gameState.boss.hp}/{gameState.boss.maxHp} HP
                   </span>
                 </div>
@@ -1420,10 +1420,10 @@ const Index = () => {
 
             {/* Auto-farm indicator */}
             {autoFarm && (
-              <div className="pixel-border bg-primary/10 p-2.5 flex items-center justify-between">
-                <span className="font-pixel text-[8px] text-primary flex items-center gap-1.5">
+              <div className="pixel-border bg-primary/10 p-2.5 flex items-center justify-between gap-2">
+                <span className="font-pixel text-[8px] text-primary flex items-center gap-1.5 whitespace-nowrap">
                   <FastForward size={12} /> AUTO-FARM ACTIF
-                  <span className="text-muted-foreground">• Run #{farmStats.runs + 1} • Total: {farmStats.totalCoins} BC</span>
+                  <span className="text-muted-foreground tabular-nums">• Run #{farmStats.runs + 1} • Total: {farmStats.totalCoins} BC</span>
                 </span>
                 <button
                   onClick={() => { setAutoFarm(false); endTreasureHunt(); }}

@@ -50,7 +50,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ hero, compact, onClick, selected })
         </div>
 
         <div className="text-left flex-1 min-w-0">
-          <p className="font-pixel text-[8px] text-foreground truncate">{hero.name}</p>
+          <p className="font-pixel text-[8px] text-foreground truncate max-w-[80px]">{hero.name}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-[9px] font-pixel" style={{ color: `hsl(var(--game-rarity-${hero.rarity}))` }}>
               {config.label}
@@ -71,7 +71,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ hero, compact, onClick, selected })
               }}
             />
           </div>
-          <p className="text-[8px] text-muted-foreground text-center mt-0.5">
+          <p className="text-[8px] text-muted-foreground text-center mt-0.5 tabular-nums">
             {Math.floor(hero.currentStamina)}/{hero.maxStamina}
           </p>
         </div>
@@ -121,7 +121,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ hero, compact, onClick, selected })
             }}
           />
         </div>
-        <p className="text-muted-foreground text-center flex items-center justify-center gap-1">
+        <p className="text-muted-foreground text-center flex items-center justify-center gap-1 tabular-nums">
           <Battery size={10} /> {Math.floor(hero.currentStamina)}/{hero.maxStamina} STA
         </p>
 
