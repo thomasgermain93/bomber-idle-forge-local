@@ -28,7 +28,7 @@ type Screen = 'hub' | 'treasure-hunt' | 'heroes' | 'summon' | 'story' | 'story-b
 
 
 const Index = () => {
-  const { user, signOut } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>('hub');
   const [player, setPlayer] = useState<PlayerData>(() =>
@@ -82,9 +82,9 @@ const Index = () => {
     setMuted(newVal);
   };
 
-  // Save to localStorage when player data changes (for offline users or as backup)
+  // Save to localStorage when player data changes (offline mode + authenticated safety backup)
   useEffect(() => {
-    if (user || isCloudLoading) return;
+    if (isCloudLoading) return;
     if (!isInitialMountRef.current) {
       savePlayerData(player);
       saveDailyQuests(dailyQuests);
@@ -101,6 +101,7 @@ const Index = () => {
   // Load from cloud on mount (connected users only) - prevents rollback on navigation
   useEffect(() => {
     if (!user) return;
+    if (authLoading || !session?.access_token) return;
     if (cloudLoadedRef.current) {
       console.log('CLOUD_LOAD_SKIP', { reason: 'already_loaded', heroCount: player.heroes.length });
       return;
@@ -204,7 +205,7 @@ const Index = () => {
     }).finally(() => {
       setIsCloudLoading(false);
     });
-  }, [user?.id, loadFromCloud]);
+  }, [user?.id, authLoading, session?.access_token, loadFromCloud]);
 
   // Calculate account level from XP
   const getAccountLevel = (xp: number) => {
