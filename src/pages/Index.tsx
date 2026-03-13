@@ -577,12 +577,20 @@ const Index = () => {
     if (available.length < count) return;
     
     const toRemove = new Set(available.slice(0, count).map(h => h.id));
+    const removedIds = Array.from(toRemove);
     const newHero = generateHero(to);
+    const mergedHeroes = [...player.heroes.filter(h => !toRemove.has(h.id)), newHero];
     
     setPlayer(prev => ({
       ...prev,
-      heroes: [...prev.heroes.filter(h => !toRemove.has(h.id)), newHero],
+      heroes: mergedHeroes,
+      totalHeroesOwned: mergedHeroes.length,
     }));
+
+    if (canWriteCloud) {
+      saveHeroesToCloud([newHero]);
+      removeHeroesFromCloud(removedIds);
+    }
   };
 
   const mergeAll = useCallback(() => {
@@ -609,7 +617,18 @@ const Index = () => {
     }
     
     if (mergeCount > 0) {
-      setPlayer(prev => ({ ...prev, heroes: currentHeroes }));
+      setPlayer(prev => ({ ...prev, heroes: currentHeroes, totalHeroesOwned: currentHeroes.length }));
+
+      if (canWriteCloud) {
+        const addedHeroes = currentHeroes.filter(h => !player.heroes.some(existing => existing.id === h.id));
+        const removedHeroIds = player.heroes
+          .filter(h => !currentHeroes.some(ch => ch.id === h.id))
+          .map(h => h.id);
+
+        if (addedHeroes.length > 0) saveHeroesToCloud(addedHeroes);
+        if (removedHeroIds.length > 0) removeHeroesFromCloud(removedHeroIds);
+      }
+
       toast({
         title: "Fusion terminée",
         description: `${mergeCount} fusion(s) effectuée(s)`,
@@ -622,7 +641,7 @@ const Index = () => {
     }
     
     setIsMerging(false);
-  }, [player.heroes, isMerging]);
+  }, [player.heroes, isMerging, canWriteCloud, saveHeroesToCloud, removeHeroesFromCloud]);
 
   const startStoryStage = (stage: StoryStage) => {
     const map = generateMap(stage.width, stage.height, stage.blockDensity, 0); // no chests in story
