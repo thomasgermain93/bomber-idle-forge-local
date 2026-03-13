@@ -58,6 +58,7 @@ export interface Explosion {
   tiles: { x: number; y: number }[];
   timer: number;
   team: BombTeam;
+  heroId?: string;
 }
 
 export interface Chest {

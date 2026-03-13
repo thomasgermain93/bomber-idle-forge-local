@@ -389,7 +389,7 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
   // Process explosions from bombs
   for (const bomb of explodingBombs) {
     const tiles = getExplosionTiles(map, bomb.position, bomb.range);
-    explosions.push({ id: genId(), tiles, timer: 0.4, team: bomb.team });
+    explosions.push({ id: genId(), tiles, timer: 0.4, team: bomb.team, heroId: bomb.heroId });
 
     for (const tile of tiles) {
       if (map.tiles[tile.y][tile.x] === 'block') {
@@ -420,7 +420,7 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
     for (const cb of chainedBombs) {
       bombs = bombs.filter(b => b.id !== cb.id);
       const cbTiles = getExplosionTiles(map, cb.position, cb.range);
-      explosions.push({ id: genId(), tiles: cbTiles, timer: 0.4, team: cb.team });
+      explosions.push({ id: genId(), tiles: cbTiles, timer: 0.4, team: cb.team, heroId: cb.heroId });
     }
 
     // Explosion damage to heroes: only enemy bombs can hurt heroes
@@ -441,6 +441,16 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
   // Update heroes
   for (let i = 0; i < heroes.length; i++) {
     const hero = heroes[i];
+
+    // GUARD: Story mode - ensure any hero with 0 stamina stays KO
+    if (state.isStoryMode && hero.currentStamina <= 0) {
+      hero.currentStamina = 0;
+      hero.state = 'resting';
+      hero.isActive = false;
+      hero.targetPosition = null;
+      hero.path = null;
+      continue;
+    }
 
     if (hero.state === 'resting') {
       if (state.isStoryMode) {
@@ -470,6 +480,10 @@ export function tickGame(state: GameState, deltaMs: number): GameState {
       hero.isActive = false;
       hero.targetPosition = null;
       hero.path = null;
+      // Story mode: explicitly prevent any respawn
+      if (state.isStoryMode) {
+        hero.isActive = false;
+      }
       continue;
     }
 

@@ -424,6 +424,22 @@ const Index = () => {
                   coinsEarned += 500;
                 }
               }
+
+              // Friendly fire en mode histoire: bombes alliées blessent les autres héros
+              if (state.isStoryMode) {
+                for (const h of heroes) {
+                  // Ne pas blesser le héros qui a posé la bombe
+                  if (h.id === exp.heroId) continue;
+                  if (h.state === 'resting') continue;
+                  const hx = Math.round(h.position.x);
+                  const hy = Math.round(h.position.y);
+                  if (exp.tiles.some(t => t.x === hx && t.y === hy)) {
+                    const damage = Math.floor(h.maxStamina * 0.15);
+                    h.currentStamina = Math.max(0, h.currentStamina - damage);
+                    eventLog.push(`💥 ${h.name} blessé par bombe alliée! -${damage} ST`);
+                  }
+                }
+              }
             }
           }
         }
@@ -456,8 +472,8 @@ const Index = () => {
         const bossDefeated = !boss || boss.hp <= 0;
         const storyComplete = allEnemiesDead && bossDefeated;
 
-        // Check story defeat: all heroes KO (stamina = 0)
-        const allHeroesKO = heroes.every(h => h.currentStamina <= 0);
+        // Check story defeat: all heroes KO (stamina = 0 AND isActive = false)
+        const allHeroesKO = heroes.every(h => h.currentStamina <= 0 && !h.isActive);
         const storyFailed = allHeroesKO && !storyComplete && !state.mapCompleted;
 
         if (storyComplete && !state.mapCompleted) {
