@@ -14,6 +14,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-03-10',
     title: 'Mises à jour récentes',
     changes: [
+      { type: 'feature', description: 'i18n FR: traduire 100% des textes encore en anglais (UI, toasts, auth, contenu) (#101)' },
       { type: 'feature', description: 'fix(cloud): unblock write-back after rollback guard (#100)' },
       { type: 'feature', description: 'Story mode regressions: respawn implicite + friendly fire + défaite KO non bloquante (#98)' },
       { type: 'feature', description: 'Story Mode: désactiver le respawn et échouer le niveau si toute l\'équipe est KO (#95)' },
