@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Bomb, Swords, Trophy, Users, Sparkles, Shield, ChevronDown, Zap, Crown, Star, BookOpen, Clock, ChevronRight, History, Bug, Plus, Menu, X } from 'lucide-react';
 import PixelIcon from '@/components/PixelIcon';
 import { GUIDE_ARTICLES } from '@/data/guides';
+import { CHANGELOG as APP_CHANGELOG } from '@/data/changelog';
 import { supabase } from '@/integrations/supabase/client';
 
 import gameCombat from '@/assets/game-combat.jpg';
@@ -228,35 +229,14 @@ const TreasureHuntCanvas: React.FC = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />;
 };
 
-const CHANGELOG = [
-  {
-    version: '0.9.3',
-    date: '08 Mar 2026',
-    entries: [
-      { type: 'fix', text: 'Correction du bug de pity counter Legend au-delà de 200 invocations' },
-      { type: 'fix', text: 'Stabilisation de la sauvegarde cloud lors des déconnexions fréquentes' },
-      { type: 'improve', text: 'Fluidité du rendu améliorée sur les grandes cartes (17×13)' },
-    ],
-  },
-  {
-    version: '0.9.2',
-    date: '01 Mar 2026',
-    entries: [
-      { type: 'new', text: 'Quêtes quotidiennes : 3 missions générées chaque jour' },
-      { type: 'new', text: 'Boss Citadelle : pattern "Pluie de bombes" ajouté' },
-      { type: 'improve', text: 'IA ennemie plus réactive en difficulté avancée' },
-    ],
-  },
-  {
-    version: '0.9.1',
-    date: '18 Fév 2026',
-    entries: [
-      { type: 'new', text: 'Ascension des héros jusqu\'au rang S (niveau 100)' },
-      { type: 'new', text: 'Région Volcan : 5 étapes avec le Dragon de Lave' },
-      { type: 'fix', text: 'Fix de la génération de carte bloquée en mode Chasse au Trésor' },
-    ],
-  },
-];
+const CHANGELOG = APP_CHANGELOG.slice(0, 3).map((entry) => ({
+  version: entry.version,
+  date: entry.date,
+  entries: entry.changes.slice(0, 3).map((change) => ({
+    type: change.type === 'fix' ? 'fix' : change.type === 'feature' ? 'new' : 'improve',
+    text: change.description,
+  })),
+}));
 
 const CHANGELOG_ICON = {
   new: <Plus size={10} className="text-green-400" />,
