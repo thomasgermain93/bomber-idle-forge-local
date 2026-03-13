@@ -13,7 +13,7 @@ import { generateMap, tickGame } from '@/game/engine';
 import { summonHero, generateHero } from '@/game/summoning';
 import { loadPlayerData, savePlayerData, getDefaultPlayerData, saveStoryProgress, loadStoryProgress } from '@/game/saveSystem';
 import { getUpgradeCost, upgradeHero, ascendHero, getAscensionCost, countDuplicates } from '@/game/upgradeSystem';
-import { trackSummon, trackCombatVictory, trackLevelUp, trackRarityUnlock, AchievementDefinition } from '@/game/achievements';
+import { trackSummon, trackCombatVictory, trackLevelUp, trackRarityUnlock, trackChestsOpened, trackBossDefeated, trackHeroCount, claimAchievementReward, AchievementDefinition } from '@/game/achievements';
 import { DailyQuestData, loadDailyQuests, saveDailyQuests, generateDailyQuests, updateQuestProgress, ALL_CLAIMED_BONUS, ALL_CLAIMED_XP_BONUS } from '@/game/questSystem';
 import { StoryProgress, StoryStage } from '@/game/storyTypes';
 import { spawnEnemy, spawnBoss, tickEnemies, tickBoss, damageEnemiesFromExplosion, damageBossFromExplosion, checkEnemyHeroCollision, checkBossHeroCollision } from '@/game/enemyAI';
@@ -607,6 +607,11 @@ const Index = () => {
       Object.assign(newAchievements, newState);
       newAchievementUnlocks.push(...unlocked);
     }
+
+    const totalChestsOpened = player.mapsCompleted + (gameState.chestsOpened || 0);
+    const { newState: chestState, unlocked: chestUnlocks } = trackChestsOpened(player.achievements, totalChestsOpened);
+    Object.assign(newAchievements, chestState);
+    newAchievementUnlocks.push(...chestUnlocks);
     
     setPlayer(prev => ({
       ...prev,
@@ -868,12 +873,42 @@ const Index = () => {
           : { ...h, currentStamina: deployed.currentStamina };
       });
 
+      const newAchievements = { ...player.achievements };
+      const newAchievementUnlocks: AchievementDefinition[] = [];
+
+      const totalChestsOpened = player.mapsCompleted + stateSnapshot.chestsOpened;
+      const { newState: chestState, unlocked: chestUnlocks } = trackChestsOpened(player.achievements, totalChestsOpened);
+      Object.assign(newAchievements, chestState);
+      newAchievementUnlocks.push(...chestUnlocks);
+
+      if (stateSnapshot.mapCompleted) {
+        const totalWins = player.mapsCompleted + 1;
+        const { newState: combatState, unlocked: combatUnlocks } = trackCombatVictory(player.achievements, totalWins);
+        Object.assign(newAchievements, combatState);
+        newAchievementUnlocks.push(...combatUnlocks);
+
+        if (stageSnapshot.boss) {
+          const currentBosses = storyProgress.bossesDefeated.length;
+          const { newState: bossState, unlocked: bossUnlocks } = trackBossDefeated(player.achievements, currentBosses + 1);
+          Object.assign(newAchievements, bossState);
+          newAchievementUnlocks.push(...bossUnlocks);
+        }
+      }
+
       setPlayer(prev => ({
         ...prev,
         bomberCoins: prev.bomberCoins + stateSnapshot.coinsEarned + (stateSnapshot.mapCompleted ? stageSnapshot.reward : 0),
         xp: prev.xp + (stateSnapshot.mapCompleted ? stageSnapshot.xpReward : 0),
         heroes: storyUpdatedHeroes,
+        achievements: newAchievements,
       }));
+
+      for (const achievement of newAchievementUnlocks) {
+        toast({
+          title: '🏆 Succès débloqué!',
+          description: achievement.title,
+        });
+      }
 
       if (canWriteCloud) {
         saveHeroesToCloud(storyUpdatedHeroes.filter(h => stateSnapshot.heroes.some(dh => dh.id === h.id)));
@@ -979,6 +1014,7 @@ const Index = () => {
     
     const hasLegend = batch.some(h => h.rarity === 'legend');
     const hasSuperLegend = batch.some(h => h.rarity === 'super-legend');
+    const hasEpic = batch.some(h => h.rarity === 'epic');
     if (hasSuperLegend) {
       const { newState, unlocked } = trackRarityUnlock(player.achievements, 'super-legend');
       Object.assign(newAchievements, newState);
@@ -987,7 +1023,15 @@ const Index = () => {
       const { newState, unlocked } = trackRarityUnlock(player.achievements, 'legend');
       Object.assign(newAchievements, newState);
       newAchievementUnlocks.push(...unlocked);
+    } else if (hasEpic) {
+      const { newState, unlocked } = trackRarityUnlock(player.achievements, 'epic');
+      Object.assign(newAchievements, newState);
+      newAchievementUnlocks.push(...unlocked);
     }
+
+    const { newState: heroCountState, unlocked: heroCountUnlocks } = trackHeroCount(player.achievements, mergedHeroes.length);
+    Object.assign(newAchievements, heroCountState);
+    newAchievementUnlocks.push(...heroCountUnlocks);
     
     setPlayer(prev => ({
       ...prev,
@@ -1829,7 +1873,27 @@ const Index = () => {
                 <ChevronLeft size={12} /> Retour
               </button>
             </div>
-            <Achievements achievements={player.achievements} />
+            <Achievements 
+              achievements={player.achievements} 
+              onClaimReward={(achievementId: string) => {
+                const { newState, claimed, reward } = claimAchievementReward(player.achievements, achievementId);
+                if (claimed && reward) {
+                  setPlayer(prev => ({
+                    ...prev,
+                    bomberCoins: prev.bomberCoins + (reward.type === 'coins' ? reward.amount : 0),
+                    shards: {
+                      ...prev.shards,
+                      [reward.rarity as keyof typeof prev.shards]: (prev.shards[reward.rarity as keyof typeof prev.shards] || 0) + (reward.type === 'shards' ? reward.amount : 0),
+                    },
+                    achievements: newState,
+                  }));
+                  toast({
+                    title: '🎁 Récompense réclamée!',
+                    description: `${reward.amount} ${reward.type === 'coins' ? 'pièces' : 'shards'} ${reward.rarity || ''}`,
+                  });
+                }
+              }}
+            />
           </motion.div>
         )}
       </main>
