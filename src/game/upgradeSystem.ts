@@ -299,6 +299,7 @@ export function canLevelUp(hero: Hero): boolean {
 export function getXpProgress(hero: Hero): { current: number; required: number; percentage: number } {
   const maxLevel = getMaxLevel(hero.rarity);
   const maxXp = getXpForLevel(maxLevel);
+  const heroXp = Number.isFinite(hero.xp) ? hero.xp : 0;
 
   if (hero.level >= maxLevel) {
     return { current: maxXp, required: maxXp, percentage: 100 };
@@ -306,8 +307,8 @@ export function getXpProgress(hero: Hero): { current: number; required: number; 
 
   const required = getXpForLevel(hero.level + 1);
   const prevRequired = getXpForLevel(hero.level);
-  const progress = hero.xp - prevRequired;
-  const needed = required - prevRequired;
+  const progress = Math.max(0, heroXp - prevRequired);
+  const needed = Math.max(1, required - prevRequired);
   const percentage = Math.min(100, Math.max(0, (progress / needed) * 100));
   return { current: progress, required: needed, percentage };
 }
@@ -316,8 +317,10 @@ export function addXp(hero: Hero, xp: number): Hero {
   const maxLevel = getMaxLevel(hero.rarity);
   if (hero.level >= maxLevel) return hero;
 
+  const baseXp = Number.isFinite(hero.xp) ? hero.xp : 0;
+  const earnedXp = Number.isFinite(xp) ? xp : 0;
   const maxXp = getXpForLevel(maxLevel);
-  const newXp = Math.min(hero.xp + xp, maxXp);
+  const newXp = Math.min(baseXp + earnedXp, maxXp);
   let newLevel = hero.level;
 
   while (newLevel < maxLevel && newXp >= getXpForLevel(newLevel + 1)) {

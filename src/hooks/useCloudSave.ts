@@ -31,6 +31,7 @@ function rowToHero(row: any): Hero {
     rarity: row.rarity,
     level: row.level,
     stars: row.stars,
+    xp: Number.isFinite(Number(row.xp)) ? Number(row.xp) : 0,
     stats: row.stats,
     skills: row.skills,
     currentStamina: Number(row.current_stamina),

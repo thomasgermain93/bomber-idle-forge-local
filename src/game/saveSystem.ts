@@ -47,6 +47,12 @@ export function loadPlayerData(): PlayerData {
       if (!parsed.achievements) {
         parsed.achievements = getDefaultAchievementState();
       }
+      if (Array.isArray(parsed.heroes)) {
+        parsed.heroes = parsed.heroes.map((hero: any) => ({
+          ...hero,
+          xp: Number.isFinite(Number(hero?.xp)) ? Number(hero.xp) : 0,
+        }));
+      }
       return parsed;
     }
   } catch {
