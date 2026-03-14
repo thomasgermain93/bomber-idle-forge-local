@@ -9,10 +9,10 @@ import SummonModal from '@/components/SummonModal';
 import HeroUpgradeModal from '@/components/HeroUpgradeModal';
 import StoryMode from '@/components/StoryMode';
 import { GameState, Hero, MAP_CONFIGS, PlayerData, RARITY_CONFIG, Rarity } from '@/game/types';
-import { generateMap, tickGame } from '@/game/engine';
+import { generateMap, tickGame, XP_REWARDS } from '@/game/engine';
 import { summonHero, generateHero } from '@/game/summoning';
 import { loadPlayerData, savePlayerData, getDefaultPlayerData, saveStoryProgress, loadStoryProgress } from '@/game/saveSystem';
-import { getUpgradeCost, upgradeHero, ascendHero, getAscensionCost, countDuplicates } from '@/game/upgradeSystem';
+import { ascendHero, getAscensionCost, countDuplicates, isHeroMaxLevel, getMaxLevel } from '@/game/upgradeSystem';
 import { DailyQuestData, loadDailyQuests, saveDailyQuests, generateDailyQuests, updateQuestProgress, ALL_CLAIMED_BONUS, ALL_CLAIMED_XP_BONUS } from '@/game/questSystem';
 import { StoryProgress, StoryStage } from '@/game/storyTypes';
 import { spawnEnemy, spawnBoss, tickEnemies, tickBoss, damageEnemiesFromExplosion, damageBossFromExplosion, checkEnemyHeroCollision, checkBossHeroCollision } from '@/game/enemyAI';
@@ -412,6 +412,15 @@ const Index = () => {
                 SFX.enemyKill();
                 eventLog.push(`💥 ${kills} ennemi(s) éliminé(s)!`);
                 coinsEarned += kills * 10;
+                // Give XP to hero who placed the bomb
+                if (exp.heroId) {
+                  const heroIdx = heroes.findIndex(h => h.id === exp.heroId);
+                  if (heroIdx >= 0) {
+                    const xpReward = kills * XP_REWARDS.enemyKilled;
+                    heroes[heroIdx] = addXp(heroes[heroIdx], xpReward);
+                    eventLog.push(`✨ ${heroes[heroIdx].name} gagne ${xpReward} XP!`);
+                  }
+                }
               }
 
               if (boss && boss.hp > 0) {
@@ -627,16 +636,26 @@ const Index = () => {
     }
   }, [autoFarm, gameState?.mapCompleted, collectAndContinue]);
 
-  // Merge system
+  // Merge system - heroes must be at max level to be merged
   const MERGE_RECIPES: { from: Rarity; to: Rarity; count: number }[] = [
-    { from: 'common', to: 'rare', count: 12 },
-    { from: 'rare', to: 'super-rare', count: 6 },
-    { from: 'super-rare', to: 'epic', count: 3 },
+    { from: 'common', to: 'rare', count: 2 },
+    { from: 'rare', to: 'super-rare', count: 3 },
+    { from: 'super-rare', to: 'epic', count: 4 },
+    { from: 'epic', to: 'legend', count: 5 },
+    { from: 'legend', to: 'super-legend', count: 6 },
   ];
 
   const handleMerge = (from: Rarity, to: Rarity, count: number) => {
-    const available = player.heroes.filter(h => h.rarity === from);
-    if (available.length < count) return;
+    const available = player.heroes.filter(h => h.rarity === from && isHeroMaxLevel(h));
+    if (available.length < count) {
+      const totalOfRarity = player.heroes.filter(h => h.rarity === from).length;
+      const maxedOfRarity = available.length;
+      toast({
+        title: "Fusion impossible",
+        description: `Il faut des héros ${RARITY_CONFIG[from].label} niveau max. Vous avez ${maxedOfRarity}/${count} héros maxed.`,
+      });
+      return;
+    }
     
     const toRemove = new Set(available.slice(0, count).map(h => h.id));
     const removedIds = Array.from(toRemove);
@@ -654,6 +673,11 @@ const Index = () => {
       saveHeroesToCloud([newHero]);
       removeHeroesFromCloud(removedIds);
     }
+    
+    toast({
+      title: "Fusion réussie",
+      description: `Héros ${RARITY_CONFIG[to].label} créé!`,
+    });
   };
 
   const mergeAll = useCallback(() => {
@@ -667,7 +691,7 @@ const Index = () => {
     while (madeProgress) {
       madeProgress = false;
       for (const recipe of MERGE_RECIPES) {
-        const available = currentHeroes.filter(h => h.rarity === recipe.from);
+        const available = currentHeroes.filter(h => h.rarity === recipe.from && isHeroMaxLevel(h));
         if (available.length >= recipe.count) {
           const toRemove = new Set(available.slice(0, recipe.count).map(h => h.id));
           const newHero = generateHero(recipe.to);
@@ -700,7 +724,7 @@ const Index = () => {
     } else {
       toast({
         title: "Aucune fusion possible",
-        description: "Vous n'avez pas assez de héros pour fusionner",
+        description: "Vous n'avez pas assez de héros niveau max pour fusionner",
       });
     }
     
@@ -980,25 +1004,15 @@ const Index = () => {
   };
 
   const handleUpgrade = (heroId: string) => {
-    const hero = player.heroes.find(h => h.id === heroId);
-    if (!hero || hero.level >= 10) return;
-    const cost = getUpgradeCost(hero.level);
-    if (player.bomberCoins < cost) return;
-    const upgraded = upgradeHero(hero);
-    setPlayer(prev => ({
-      ...prev,
-      bomberCoins: prev.bomberCoins - cost,
-      heroes: prev.heroes.map(h => h.id === heroId ? upgraded : h),
-    }));
-    if (canWriteCloud) {
-      saveHeroesToCloud([upgraded]);
-    }
-    setDailyQuests(prev => updateQuestProgress(prev, 'upgrade_hero', 1));
+    // Level-up is now automatic via XP gained in combat
+    // This function is kept for UI compatibility but does nothing
+    return;
   };
 
   const handleAscend = (heroId: string) => {
     const hero = player.heroes.find(h => h.id === heroId);
-    if (!hero || hero.level < 10 || hero.stars >= 3) return;
+    const maxLevel = getMaxLevel(hero?.rarity);
+    if (!hero || hero.level < maxLevel || hero.stars >= 3) return;
     const info = getAscensionCost(hero.stars);
     if (!info) return;
     const dupes = countDuplicates(player.heroes, heroId, hero.rarity);
@@ -1689,7 +1703,8 @@ const Index = () => {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {MERGE_RECIPES.map(({ from, to, count }) => {
-                  const available = player.heroes.filter(h => h.rarity === from).length;
+                  const available = player.heroes.filter(h => h.rarity === from && isHeroMaxLevel(h)).length;
+                  const totalOfRarity = player.heroes.filter(h => h.rarity === from).length;
                   const canMerge = available >= count;
                   return (
                     <button
@@ -1704,7 +1719,7 @@ const Index = () => {
                     >
                       <div className="flex items-center justify-center gap-1.5 mb-1">
                         <span className="font-pixel text-[8px]" style={{ color: `hsl(var(--game-rarity-${from}))` }}>
-                          {count}× {RARITY_CONFIG[from].label}
+                          {count}× {RARITY_CONFIG[from].label} max
                         </span>
                         <span className="text-[8px] text-muted-foreground">→</span>
                         <span className="font-pixel text-[8px]" style={{ color: `hsl(var(--game-rarity-${to}))` }}>
@@ -1712,7 +1727,7 @@ const Index = () => {
                         </span>
                       </div>
                       <p className="text-[7px] text-muted-foreground">
-                        Disponible: {available}/{count}
+                        {available >= count ? 'Prêt' : `${available}/${count} maxed`} ({totalOfRarity} total)
                       </p>
                     </button>
                   );
