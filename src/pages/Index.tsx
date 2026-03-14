@@ -15,7 +15,7 @@ import { loadPlayerData, savePlayerData, getDefaultPlayerData, saveStoryProgress
 import { getUpgradeCost, upgradeHero, ascendHero, getAscensionCost, countDuplicates } from '@/game/upgradeSystem';
 import { trackSummon, trackCombatVictory, trackLevelUp, trackRarityUnlock, trackChestsOpened, trackBossDefeated, trackHeroCount, claimAchievementReward, AchievementDefinition } from '@/game/achievements';
 import { DailyQuestData, loadDailyQuests, saveDailyQuests, generateDailyQuests, updateQuestProgress, ALL_CLAIMED_BONUS, ALL_CLAIMED_XP_BONUS } from '@/game/questSystem';
-import { StoryProgress, StoryStage } from '@/game/storyTypes';
+import { StoryProgress, StoryStage, BOSS_LEVEL_BY_TYPE, BOSS_RARITY_REWARD, BossType } from '@/game/storyTypes';
 import { spawnEnemy, spawnBoss, tickEnemies, tickBoss, damageEnemiesFromExplosion, damageBossFromExplosion, checkEnemyHeroCollision, checkBossHeroCollision } from '@/game/enemyAI';
 import { STORY_REGIONS } from '@/game/storyData';
 import { getExplosionTiles } from '@/game/engine';
@@ -60,7 +60,7 @@ const Index = () => {
   );
   const [storyProgress, setStoryProgress] = useState<StoryProgress>(() =>
     user
-      ? { completedStages: [], currentRegion: 'forest', bossesDefeated: [], highestStage: 0 }
+      ? { completedStages: [], currentRegion: 'forest', bossesDefeated: [], highestStage: 0, bossFirstClearRewards: [] }
       : loadStoryProgress()
   );
   const [currentStoryStage, setCurrentStoryStage] = useState<StoryStage | null>(null);
@@ -442,7 +442,7 @@ const Index = () => {
 
               // Friendly fire en mode histoire: bombes alliées blessent les autres héros
               if (state.isStoryMode) {
-                for (const h of heroes) {
+                for (const h of state.heroes) {
                   // Ne pas blesser le héros qui a posé la bombe
                   if (h.id === exp.heroId) continue;
                   if (h.state === 'resting') continue;
@@ -865,6 +865,19 @@ const Index = () => {
     const stateSnapshot = gameState;
 
     if (stateSnapshot) {
+      let newHero: Hero | null = null;
+      let rewardedRarity: Rarity | null = null;
+
+      if (stateSnapshot.mapCompleted && stageSnapshot.boss) {
+        const bossLevel = BOSS_LEVEL_BY_TYPE[stageSnapshot.boss as BossType];
+        const rarity = BOSS_RARITY_REWARD[bossLevel];
+        
+        if (bossLevel && rarity && !storyProgress.bossFirstClearRewards.includes(bossLevel)) {
+          newHero = generateHero(rarity);
+          rewardedRarity = rarity;
+        }
+      }
+
       const storyUpdatedHeroes = player.heroes.map(h => {
         const deployed = stateSnapshot.heroes.find(dh => dh.id === h.id);
         if (!deployed) return h;
@@ -872,6 +885,16 @@ const Index = () => {
           ? { ...h, currentStamina: h.maxStamina }
           : { ...h, currentStamina: deployed.currentStamina };
       });
+
+      if (newHero && rewardedRarity) {
+        const rarityLabel = RARITY_CONFIG[rewardedRarity].label;
+        toast({
+          title: "🎉 Héros garanti!",
+          description: `Vous avez reçu un héros ${rarityLabel} pour votre première victoire contre ce boss!`,
+          duration: 6000,
+        });
+        storyUpdatedHeroes.push(newHero);
+      }
 
       const newAchievements = { ...player.achievements };
       const newAchievementUnlocks: AchievementDefinition[] = [];
@@ -901,6 +924,7 @@ const Index = () => {
         xp: prev.xp + (stateSnapshot.mapCompleted ? stageSnapshot.xpReward : 0),
         heroes: storyUpdatedHeroes,
         achievements: newAchievements,
+        totalHeroesOwned: prev.totalHeroesOwned + (newHero ? 1 : 0),
       }));
 
       for (const achievement of newAchievementUnlocks) {
@@ -915,16 +939,31 @@ const Index = () => {
       }
 
       if (stateSnapshot.mapCompleted) {
-        setStoryProgress(prev => ({
-          ...prev,
-          completedStages: prev.completedStages.includes(stageSnapshot.id)
-            ? prev.completedStages
-            : [...prev.completedStages, stageSnapshot.id],
-          bossesDefeated: stageSnapshot.boss && !prev.bossesDefeated.includes(stageSnapshot.boss)
-            ? [...prev.bossesDefeated, stageSnapshot.boss]
-            : prev.bossesDefeated,
-          highestStage: Math.max(prev.highestStage, stageSnapshot.stageNumber),
-        }));
+        if (stageSnapshot.boss) {
+          const bossLevel = BOSS_LEVEL_BY_TYPE[stageSnapshot.boss as BossType];
+          
+          setStoryProgress(prev => ({
+            ...prev,
+            completedStages: prev.completedStages.includes(stageSnapshot.id)
+              ? prev.completedStages
+              : [...prev.completedStages, stageSnapshot.id],
+            bossesDefeated: !prev.bossesDefeated.includes(stageSnapshot.boss)
+              ? [...prev.bossesDefeated, stageSnapshot.boss]
+              : prev.bossesDefeated,
+            highestStage: Math.max(prev.highestStage, stageSnapshot.stageNumber),
+            bossFirstClearRewards: !prev.bossFirstClearRewards.includes(bossLevel)
+              ? [...prev.bossFirstClearRewards, bossLevel]
+              : prev.bossFirstClearRewards,
+          }));
+        } else {
+          setStoryProgress(prev => ({
+            ...prev,
+            completedStages: prev.completedStages.includes(stageSnapshot.id)
+              ? prev.completedStages
+              : [...prev.completedStages, stageSnapshot.id],
+            highestStage: Math.max(prev.highestStage, stageSnapshot.stageNumber),
+          }));
+        }
       }
 
       setDailyQuests(prev => {
